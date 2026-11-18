@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Can We Hug? - Interactive Love Dialogue</title>
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        roseSoft: '#FFF5F7',
+                        roseAccent: '#FF4D6D',
+                        roseDark: '#C9184A',
+                        ink: '#1E1B24',
+                        mutedInk: '#6E6A7C'
+                    },
+                    boxShadow: {
+                        'card': '0 20px 50px -12px rgba(24, 24, 27, 0.08), 0 0 1px 1px rgba(24, 24, 27, 0.04)',
+                        'bubble': '0 8px 24px -4px rgba(24, 24, 27, 0.06), 0 2px 6px -1px rgba(24, 24, 27, 0.03)',
+                        'bubble-hover': '0 14px 30px -4px rgba(255, 77, 109, 0.16), 0 4px 10px -1px rgba(255, 77, 109, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles for crisp speech bubble tails & smooth animations */
+        body {
+            background-color: #FFFFFF;
+            color: #1E1B24;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* Top Speech Bubble Tail (pointing down toward character) */
+        .bubble-down {
+            position: relative;
+            background: #FFFFFF;
+            border: 1.5px solid #F1F1F5;
+            border-radius: 22px;
+        }
+        .bubble-down::before {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: #F1F1F5 transparent transparent transparent;
+        }
+        .bubble-down::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 9px 9px 0;
+            border-style: solid;
+            border-color: #FFFFFF transparent transparent transparent;
+        }
+
+        /* Option Speech Bubble Tail (pointing up toward character thumbnail) */
+        .bubble-up {
+            position: relative;
+            background: #FFFFFF;
+            border: 1.5px solid #EFEFF4;
+            border-radius: 18px;
+            transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .bubble-up::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 0 8px 8px;
+            border-style: solid;
+            border-color: transparent transparent #EFEFF4 transparent;
+            transition: border-color 0.25s ease;
+        }
+        .bubble-up::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 0 7px 7px;
+            border-style: solid;
+            border-color: transparent transparent #FFFFFF transparent;
+            transition: border-color 0.25s ease;
+        }
+
+        /* Hover & Active states for option cards */
+        .option-card:hover .bubble-up,
+        .option-card:active .bubble-up {
+            border-color: #FFCCD5;
+            background-color: #FFF9FA;
+        }
+        .option-card:hover .bubble-up::before,
+        .option-card:active .bubble-up::before {
+            border-color: transparent transparent #FFCCD5 transparent;
+        }
+        .option-card:hover .bubble-up::after,
+        .option-card:active .bubble-up::after {
+            border-color: transparent transparent #FFF9FA transparent;
+        }
+
+        /* Slide transitions */
+        .slide-view {
+            transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1), transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .slide-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(14px) scale(0.98);
+            position: absolute;
+            inset: 0;
+        }
+        .slide-active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0) scale(1);
+            position: relative;
+        }
+
+        /* Gentle floating animation for main character */
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-float {
+            animation: gentleFloat 3.4s ease-in-out infinite;
+        }
+
+        /* Pop-in animation for speech bubbles */
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.88) translateY(8px); }
+            70% { opacity: 1; transform: scale(1.03) translateY(-1px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-pop {
+            animation: popIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* Floating hearts in celebration modal */
+        @keyframes heartRise {
+            0% {
+                opacity: 0;
+                transform: translateY(15px) scale(0.6) rotate(-8deg);
+            }
+            25% {
+                opacity: 0.9;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-90px) scale(1.15) rotate(12deg);
+            }
+        }
+        .floating-heart {
+            position: absolute;
+            animation: heartRise 2.8s ease-out infinite;
+            pointer-events: none;
+        }
+
+        /* Custom Slider Track & Thumb */
+        .slider-track {
+            touch-action: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-white sm:bg-zinc-50/70 flex items-center justify-center p-0 sm:p-4 antialiased">
+
+    <!-- Mobile App Container -->
+    <main class="w-full max-w-[420px] min-h-[100dvh] sm:min-h-[740px] sm:h-[760px] bg-white sm:rounded-[38px] sm:shadow-card sm:border sm:border-zinc-100 flex flex-col justify-between relative overflow-hidden">
+        
+        <!-- Subtle Top Header / Progress Indicator -->
+        <header class="w-full pt-5 px-6 pb-2 flex items-center justify-between z-10">
+            <div class="flex items-center gap-1.5">
+                <span id="dot-1" class="h-1.5 w-6 rounded-full bg-roseAccent transition-all duration-300"></span>
+                <span id="dot-2" class="h-1.5 w-2 rounded-full bg-zinc-200 transition-all duration-300"></span>
+                <span id="dot-3" class="h-1.5 w-2 rounded-full bg-zinc-200 transition-all duration-300"></span>
+                <span id="dot-4" class="h-1.5 w-2 rounded-full bg-zinc-200 transition-all duration-300"></span>
+            </div>
+            <button onclick="resetApp()" id="header-reset-btn" class="text-xs font-medium text-zinc-400 hover:text-roseAccent transition-colors px-2 py-1 rounded-full opacity-0 pointer-events-none">
+                Restart
+            </button>
+        </header>
+
+        <!-- Dynamic Slides Stage -->
+        <div class="flex-1 relative flex flex-col justify-center px-6 py-2 overflow-hidden">
+
+            <!-- ==================== SLIDE 1: CHARACTER INTRODUCTION ==================== -->
+            <section id="slide-1" class="slide-view slide-active flex flex-col items-center justify-between h-full py-2">
+                
+                <!-- Intro Header Badge -->
+                <div class="mt-1">
+                    <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-roseSoft text-roseDark text-xs font-bold tracking-wide uppercase">
+                        Meet The Duo
+                    </span>
+                </div>
+
+                <!-- Two Character Introduction Cards with Speech Bubbles -->
+                <div class="w-full flex flex-col gap-4 my-auto">
+                    
+                    <!-- Character 1: Ahinsaka Dilaccana -->
+                    <div class="flex items-center gap-3.5 p-3.5 rounded-3xl bg-zinc-50/70 border border-zinc-100 shadow-sm animate-pop">
+                        <div class="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 flex items-center justify-center bg-white rounded-2xl p-1.5 border border-zinc-100/80">
+                            <img 
+                                src="https://i.postimg.cc/8z850QWC/AIRetouch-20261118-160545159.png" 
+                                alt="Ahinsaka Dilaccana" 
+                                class="w-full h-full object-contain animate-float"
+                                onerror="this.src='https://placehold.co/200x200/FFF5F7/FF4D6D?text=Ahinsaka+Dilaccana'"
+                            >
+                        </div>
+                        <div class="flex-1">
+                            <div class="relative bg-white border-[1.5px] border-zinc-100 rounded-2xl px-4 py-3 shadow-bubble">
+                                <!-- Left pointing tail -->
+                                <span class="absolute top-1/2 -left-[7px] -translate-y-1/2 w-3 h-3 bg-white border-l-[1.5px] border-b-[1.5px] border-zinc-100 rotate-45"></span>
+                                <p class="text-[15px] sm:text-[16px] font-bold text-ink leading-snug">
+                                    This is Ahinsaka Dilaccana
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Character 2: Napuru Chamacca -->
+                    <div class="flex items-center gap-3.5 p-3.5 rounded-3xl bg-zinc-50/70 border border-zinc-100 shadow-sm animate-pop" style="animation-delay: 0.12s;">
+                        <div class="flex-1">
+                            <div class="relative bg-white border-[1.5px] border-zinc-100 rounded-2xl px-4 py-3 shadow-bubble text-right">
+                                <!-- Right pointing tail -->
+                                <span class="absolute top-1/2 -right-[7px] -translate-y-1/2 w-3 h-3 bg-white border-r-[1.5px] border-t-[1.5px] border-zinc-100 rotate-45"></span>
+                                <p class="text-[15px] sm:text-[16px] font-bold text-ink leading-snug">
+                                    This is Napuru Chamacca
+                                </p>
+                            </div>
+                        </div>
+                        <div class="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 flex items-center justify-center bg-white rounded-2xl p-1.5 border border-zinc-100/80">
+                            <img 
+                                src="https://i.postimg.cc/gcDQ7vZ4/AIRetouch-20261118-160759573.png" 
+                                alt="Napuru Chamacca" 
+                                class="w-full h-full object-contain animate-float"
+                                style="animation-delay: 0.6s;"
+                                onerror="this.src='https://placehold.co/200x200/FFF5F7/FF4D6D?text=Napuru+Chamacca'"
+                            >
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Continue Button -->
+                <div class="w-full mt-3 mb-2">
+                    <button 
+                        type="button"
+                        onclick="goToSlide(2)" 
+                        class="w-full py-3.5 px-6 rounded-2xl bg-roseAccent hover:bg-roseDark text-white font-bold text-[15px] shadow-lg shadow-roseAccent/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 focus:outline-none">
+                        <span>Continue</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ==================== SLIDE 2: INITIAL QUESTION ==================== -->
+            <section id="slide-2" class="slide-view slide-hidden flex flex-col items-center justify-between h-full py-2">
+                
+                <!-- Top Character & Speech Bubble -->
+                <div class="flex flex-col items-center w-full mt-1">
+                    <!-- Main Speech Bubble -->
+                    <div class="bubble-down shadow-bubble px-6 py-3.5 mb-4">
+                        <p class="text-[19px] font-bold tracking-tight text-ink text-center">
+                            Can we hug?
+                        </p>
+                    </div>
+
+                    <!-- Main Character Image -->
+                    <div class="w-48 h-48 sm:w-52 sm:h-52 flex items-center justify-center">
+                        <img 
+                            src="https://i.postimg.cc/wBRd87dr/AIRetouch-20261118-160644829.png" 
+                            alt="Can we hug?" 
+                            class="w-full h-full object-contain animate-float drop-shadow-sm"
+                            onerror="this.src='https://placehold.co/300x300/FFF5F7/FF4D6D?text=Can+we+hug%3F'"
+                        >
+                    </div>
+                </div>
+
+                <!-- Two Clickable Option Speech Bubble Cards -->
+                <div class="w-full grid grid-cols-2 gap-3.5 mt-4 mb-2">
+                    <!-- Option A: "Can't" -->
+                    <button 
+                        type="button"
+                        onclick="goToSlide(3)" 
+                        class="option-card group flex flex-col items-center p-3 rounded-3xl bg-zinc-50/70 hover:bg-roseSoft/60 border border-zinc-100 hover:border-rose-200 transition-all duration-200 active:scale-95 focus:outline-none">
+                        <div class="w-24 h-24 sm:w-28 sm:h-28 mb-2.5 flex items-center justify-center">
+                            <img 
+                                src="https://i.postimg.cc/bvgwrZ5q/AIRetouch-20261118-160716721.png" 
+                                alt="Can't" 
+                                class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
+                                onerror="this.src='https://placehold.co/200x200/F4F4F5/71717A?text=Can%27t'"
+                            >
+                        </div>
+                        <div class="bubble-up shadow-bubble w-full py-2.5 px-3 text-center">
+                            <span class="text-[15px] font-semibold text-ink group-hover:text-roseDark transition-colors">
+                                Can't
+                            </span>
+                        </div>
+                    </button>
+
+                    <!-- Option B: "Yess we can." -->
+                    <button 
+                        type="button"
+                        onclick="goToSlide(4)" 
+                        class="option-card group flex flex-col items-center p-3 rounded-3xl bg-zinc-50/70 hover:bg-roseSoft/60 border border-zinc-100 hover:border-rose-200 transition-all duration-200 active:scale-95 focus:outline-none">
+                        <div class="w-24 h-24 sm:w-28 sm:h-28 mb-2.5 flex items-center justify-center">
+                            <img 
+                                src="https://i.postimg.cc/fLkDbBmL/AIRetouch-20261118-160729286.png" 
+                                alt="Yess we can." 
+                                class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
+                                onerror="this.src='https://placehold.co/200x200/FFF5F7/FF4D6D?text=Yess+we+can.'"
+                            >
+                        </div>
+                        <div class="bubble-up shadow-bubble w-full py-2.5 px-3 text-center">
+                            <span class="text-[15px] font-semibold text-ink group-hover:text-roseDark transition-colors">
+                                Yess we can.
+                            </span>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ==================== SLIDE 3: WHYYY? ==================== -->
+            <section id="slide-3" class="slide-view slide-hidden flex flex-col items-center justify-between h-full py-2">
+                
+                <!-- Top Character & Speech Bubble -->
+                <div class="flex flex-col items-center w-full mt-2">
+                    <div class="bubble-down shadow-bubble px-7 py-3.5 mb-4">
+                        <p class="text-[20px] font-bold tracking-tight text-ink text-center">
+                            Whyyy?
+                        </p>
+                    </div>
+
+                    <div class="w-52 h-52 sm:w-56 sm:h-56 flex items-center justify-center">
+                        <img 
+                            src="https://i.postimg.cc/vB8Lx6ZZ/AIRetouch-20261118-160555742.png" 
+                            alt="Whyyy?" 
+                            class="w-full h-full object-contain animate-float"
+                            onerror="this.src='https://placehold.co/300x300/FFF5F7/FF4D6D?text=Whyyy%3F'"
+                        >
+                    </div>
+                </div>
+
+                <!-- Single Reply Option: "Its joke." -->
+                <div class="w-full flex justify-center mt-4 mb-3">
+                    <button 
+                        type="button"
+                        onclick="goToSlide(4)" 
+                        class="option-card group w-full max-w-[230px] flex flex-col items-center p-3.5 rounded-3xl bg-zinc-50/70 hover:bg-roseSoft/60 border border-zinc-100 hover:border-rose-200 transition-all duration-200 active:scale-95 focus:outline-none">
+                        <div class="w-28 h-28 mb-2.5 flex items-center justify-center">
+                            <img 
+                                src="https://i.postimg.cc/gcDQ7vZ4/AIRetouch-20261118-160759573.png" 
+                                alt="Its joke." 
+                                class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
+                                onerror="this.src='https://placehold.co/200x200/FFF5F7/FF4D6D?text=Its+joke.'"
+                            >
+                        </div>
+                        <div class="bubble-up shadow-bubble w-full py-2.5 px-4 text-center">
+                            <span class="text-[16px] font-semibold text-ink group-hover:text-roseDark transition-colors">
+                                Its joke.
+                            </span>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ==================== SLIDE 4: INTERACTIVE HUGGING SLIDE ==================== -->
+            <section id="slide-4" class="slide-view slide-hidden flex flex-col items-center justify-between h-full py-2">
+                
+                <!-- Top Speech Bubble Instruction -->
+                <div class="flex flex-col items-center w-full mt-1">
+                    <div class="bubble-down shadow-bubble px-5 py-3 mb-2">
+                        <p class="text-[16px] font-bold text-ink text-center">
+                            Slide to hug
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Interactive Character Stage -->
+                <div id="hug-stage" class="relative w-full h-64 sm:h-72 bg-gradient-to-b from-white via-roseSoft/30 to-zinc-50/80 rounded-3xl border border-zinc-100 overflow-hidden flex items-end justify-between px-2 pb-3 select-none">
+                    
+                    <!-- Subtle Heart Distance Indicator in Center -->
+                    <div id="distance-heart" class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 border border-rose-100 shadow-sm transition-transform duration-150">
+                        <svg class="w-3.5 h-3.5 text-roseAccent fill-roseAccent" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        <span id="hug-percent" class="text-[11px] font-bold text-roseDark">0%</span>
+                    </div>
+
+                    <!-- Boy Fixed on the Left -->
+                    <div id="boy-character" class="relative z-10 w-[44%] h-48 sm:h-52 flex items-end justify-start pointer-events-none">
+                        <img 
+                            src="https://i.postimg.cc/PxhdkYQY/AIRetouch-20261118-160704964.png" 
+                            alt="Boy waiting for hug" 
+                            class="w-full h-full object-contain object-bottom"
+                            onerror="this.src='https://placehold.co/220x260/EFF6FF/3B82F6?text=Boy'"
+                        >
+                    </div>
+
+                    <!-- Girl Sliding from the Right -->
+                    <div id="girl-character" class="relative z-20 w-[44%] h-48 sm:h-52 flex items-end justify-end pointer-events-none will-change-transform">
+                        <img 
+                            src="https://i.postimg.cc/9MjQFvCw/AIRetouch-20261118-162210468.png" 
+                            alt="Girl sliding to hug" 
+                            class="w-full h-full object-contain object-bottom"
+                            onerror="this.src='https://placehold.co/220x260/FFF5F7/FF4D6D?text=Girl'"
+                        >
+                    </div>
+
+                    <!-- Soft Ground Shadow Line -->
+                    <div class="absolute bottom-2.5 left-6 right-6 h-1.5 bg-zinc-200/50 rounded-full blur-[1px]"></div>
+                </div>
+
+                <!-- Interactive Below Button / Tactile Slider Control -->
+                <div class="w-full mt-4 mb-2">
+                    <p class="text-center text-xs font-medium text-mutedInk mb-2.5 flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-roseAccent animate-bounce" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                        </svg>
+                        <span>Slide button left to hug</span>
+                    </p>
+
+                    <!-- Custom Draggable Slider Track (Moves from Right to Left toward the Boy) -->
+                    <div id="slider-track" class="slider-track relative w-full h-14 bg-zinc-100/90 border border-zinc-200/80 rounded-full p-1.5 flex items-center shadow-inner overflow-hidden">
+                        <!-- Fill Progress Bar (from right to left) -->
+                        <div id="slider-fill" class="absolute right-0 top-0 bottom-0 bg-gradient-to-l from-rose-100 to-rose-200/80 rounded-full transition-none" style="width: 0%;"></div>
+
+                        <!-- Track Hint Label -->
+                        <div id="slider-hint" class="w-full text-center text-xs font-semibold text-zinc-400 pointer-events-none select-none pr-8">
+                            &larr; Slide to bring them together
+                        </div>
+
+                        <!-- Draggable Thumb Button (Starts on the Right, slides Left) -->
+                        <div 
+                            id="slider-thumb" 
+                            role="slider"
+                            aria-label="Slide to hug"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            aria-valuenow="0"
+                            tabindex="0"
+                            class="absolute right-1.5 w-11 h-11 rounded-full bg-roseAccent hover:bg-roseDark text-white shadow-md flex items-center justify-center cursor-grab active:cursor-grabbing active:scale-95 transition-colors z-10">
+                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ==================== FOOTER ==================== -->
+        <footer class="w-full py-4 px-6 border-t border-zinc-100/80 bg-white text-center z-10">
+            <p class="text-[13px] font-semibold tracking-wide text-zinc-400 flex items-center justify-center gap-1.5">
+                <span>Your Pissu Kollah</span>
+                <svg class="w-3.5 h-3.5 text-roseAccent fill-roseAccent inline-block" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </p>
+        </footer>
+
+        <!-- ==================== HUGGING CELEBRATION POP-UP MODAL ==================== -->
+        <div id="hug-modal" class="fixed inset-0 z-50 flex items-center justify-center p-5 bg-zinc-900/35 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+            <div id="hug-modal-card" class="relative w-full max-w-[360px] bg-white rounded-[32px] p-6 shadow-2xl border border-rose-100 flex flex-col items-center text-center transform scale-90 transition-transform duration-300">
+                
+                <!-- Floating Decorative Hearts -->
+                <div id="hearts-container" class="absolute inset-0 overflow-hidden rounded-[32px] pointer-events-none"></div>
+
+                <!-- Top Celebration Speech Bubble -->
+                <div class="bubble-down shadow-bubble px-6 py-3 mb-4 bg-roseSoft/50 border-rose-100">
+                    <p class="text-[18px] font-extrabold text-roseDark tracking-tight">
+                        Warmest Hug Ever!
+                    </p>
+                </div>
+
+                <!-- Final Hugging Image -->
+                <div class="w-56 h-56 sm:w-60 sm:h-60 my-1 flex items-center justify-center">
+                    <img 
+                        src="https://i.postimg.cc/26HMXZHX/AIRetouch-20261118-162451824.png" 
+                        alt="Hugging together" 
+                        class="w-full h-full object-contain drop-shadow-md"
+                        onerror="this.src='https://placehold.co/320x320/FFF5F7/FF4D6D?text=Warm+Hug!'"
+                    >
+                </div>
+
+                <!-- Sweet Sub-caption -->
+                <p class="text-xs font-medium text-mutedInk mt-2 mb-5">
+                    Sending you all the love in the world.
+                </p>
+
+                <!-- Replay Button -->
+                <button 
+                    type="button"
+                    onclick="resetApp()" 
+                    class="w-full py-3.5 px-6 rounded-2xl bg-roseAccent hover:bg-roseDark text-white font-semibold text-sm shadow-lg shadow-roseAccent/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    </svg>
+                    <span>Hug Again</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // State variables
+        let currentSlide = 1;
+        let hugCompleted = false;
+        let isDragging = false;
+        let currentProgress = 0; // 0 to 1 (0 = far right, 1 = next to boy on left)
+
+        // DOM Elements
+        const slides = {
+            1: document.getElementById('slide-1'),
+            2: document.getElementById('slide-2'),
+            3: document.getElementById('slide-3'),
+            4: document.getElementById('slide-4')
+        };
+        const dots = {
+            1: document.getElementById('dot-1'),
+            2: document.getElementById('dot-2'),
+            3: document.getElementById('dot-3'),
+            4: document.getElementById('dot-4')
+        };
+        const headerResetBtn = document.getElementById('header-reset-btn');
+        const sliderTrack = document.getElementById('slider-track');
+        const sliderThumb = document.getElementById('slider-thumb');
+        const sliderFill = document.getElementById('slider-fill');
+        const sliderHint = document.getElementById('slider-hint');
+        const girlCharacter = document.getElementById('girl-character');
+        const boyCharacter = document.getElementById('boy-character');
+        const hugStage = document.getElementById('hug-stage');
+        const hugPercent = document.getElementById('hug-percent');
+        const distanceHeart = document.getElementById('distance-heart');
+        const hugModal = document.getElementById('hug-modal');
+        const hugModalCard = document.getElementById('hug-modal-card');
+        const heartsContainer = document.getElementById('hearts-container');
+
+        /**
+         * Navigate smoothly between slides
+         */
+        function goToSlide(slideNumber) {
+            currentSlide = slideNumber;
+
+            // Update slide visibility classes
+            Object.keys(slides).forEach((key) => {
+                const num = parseInt(key, 10);
+                if (num === slideNumber) {
+                    slides[num].classList.remove('slide-hidden');
+                    slides[num].classList.add('slide-active');
+                } else {
+                    slides[num].classList.remove('slide-active');
+                    slides[num].classList.add('slide-hidden');
+                }
+            });
+
+            // Update progress dots in header
+            Object.keys(dots).forEach((key) => {
+                const num = parseInt(key, 10);
+                if (num === slideNumber) {
+                    dots[num].classList.remove('w-2', 'bg-zinc-200');
+                    dots[num].classList.add('w-6', 'bg-roseAccent');
+                } else {
+                    dots[num].classList.remove('w-6', 'bg-roseAccent');
+                    dots[num].classList.add('w-2', 'bg-zinc-200');
+                }
+            });
+
+            // Show subtle restart button when past Slide 1
+            if (slideNumber > 1) {
+                headerResetBtn.classList.remove('opacity-0', 'pointer-events-none');
+                headerResetBtn.classList.add('opacity-100');
+            } else {
+                headerResetBtn.classList.add('opacity-0', 'pointer-events-none');
+                headerResetBtn.classList.remove('opacity-100');
+            }
+
+            // Reset slider position whenever entering Slide 4
+            if (slideNumber === 4) {
+                resetSliderState();
+            }
+        }
+
+        /**
+         * Reset the interactive slider & girl position on Slide 3
+         */
+        function resetSliderState() {
+            hugCompleted = false;
+            isDragging = false;
+            currentProgress = 0;
+            updateSliderVisuals(0);
+        }
+
+        /**
+         * Update thumb position, girl position, and progress indicator
+         * @param {number} progress - Value between 0 (start on right) and 1 (hug on left)
+         */
+        function updateSliderVisuals(progress) {
+            currentProgress = Math.max(0, Math.min(1, progress));
+
+            const trackRect = sliderTrack.getBoundingClientRect();
+            const thumbWidth = sliderThumb.offsetWidth;
+            const padding = 6; // matches p-1.5 (6px)
+            const maxThumbTravel = trackRect.width - thumbWidth - (padding * 2);
+
+            // Thumb starts on the right (offset = 0) and moves left as progress increases
+            const thumbOffset = currentProgress * maxThumbTravel;
+            sliderThumb.style.transform = `translateX(-${thumbOffset}px)`;
+            sliderThumb.setAttribute('aria-valuenow', Math.round(currentProgress * 100));
+
+            // Fill bar expands from right to left
+            sliderFill.style.width = `${currentProgress * 100}%`;
+
+            // Fade out hint text as user slides
+            sliderHint.style.opacity = Math.max(0, 1 - currentProgress * 2.2);
+
+            // Calculate how far the Girl should slide left toward the Boy
+            const stageWidth = hugStage.clientWidth;
+            const girlWidth = girlCharacter.offsetWidth;
+            const boyWidth = boyCharacter.offsetWidth;
+            // Leave slight natural overlap so they stand right next to each other
+            const maxGirlTravel = Math.max(0, stageWidth - girlWidth - (boyWidth * 0.68));
+            const girlTranslateX = currentProgress * maxGirlTravel;
+
+            girlCharacter.style.transform = `translateX(-${girlTranslateX}px)`;
+
+            // Update percentage badge & heart scale
+            const pct = Math.round(currentProgress * 100);
+            hugPercent.textContent = `${pct}%`;
+            const heartScale = 1 + (currentProgress * 0.25);
+            distanceHeart.style.transform = `translateX(-50%) scale(${heartScale})`;
+
+            // Trigger celebration pop-up once girl reaches >= 92% proximity
+            if (currentProgress >= 0.92 && !hugCompleted) {
+                hugCompleted = true;
+                isDragging = false;
+                // Snap visually to 100%
+                girlCharacter.style.transition = 'transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)';
+                girlCharacter.style.transform = `translateX(-${maxGirlTravel}px)`;
+                hugPercent.textContent = '100%';
+
+                setTimeout(() => {
+                    girlCharacter.style.transition = '';
+                    openHugModal();
+                }, 260);
+            }
+        }
+
+        /**
+         * Handle pointer movement on the custom right-to-left slider
+         */
+        function handlePointerMove(clientX) {
+            if (!isDragging || hugCompleted) return;
+
+            const trackRect = sliderTrack.getBoundingClientRect();
+            const thumbWidth = sliderThumb.offsetWidth;
+            const padding = 6;
+            const maxTravel = trackRect.width - thumbWidth - (padding * 2);
+
+            if (maxTravel <= 0) return;
+
+            // Right edge anchor center of the thumb at 0% progress
+            const rightAnchorX = trackRect.right - padding - (thumbWidth / 2);
+            const deltaFromRight = rightAnchorX - clientX;
+            const progress = deltaFromRight / maxTravel;
+
+            updateSliderVisuals(progress);
+        }
+
+        // Mouse & Touch Event Listeners for the Slider
+        sliderThumb.addEventListener('pointerdown', (e) => {
+            if (hugCompleted) return;
+            isDragging = true;
+            sliderThumb.setPointerCapture(e.pointerId);
+        });
+
+        sliderTrack.addEventListener('pointerdown', (e) => {
+            if (hugCompleted) return;
+            isDragging = true;
+            handlePointerMove(e.clientX);
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            handlePointerMove(e.clientX);
+        });
+
+        window.addEventListener('pointerup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+        });
+
+        // Keyboard accessibility for the slider
+        sliderThumb.addEventListener('keydown', (e) => {
+            if (hugCompleted) return;
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                updateSliderVisuals(currentProgress + 0.12);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                updateSliderVisuals(currentProgress - 0.12);
+            }
+        });
+
+        // Recalculate positions cleanly if window resizes
+        window.addEventListener('resize', () => {
+            if (currentSlide === 4) {
+                updateSliderVisuals(currentProgress);
+            }
+        });
+
+        /**
+         * Open the celebratory hugging modal with floating hearts
+         */
+        function openHugModal() {
+            spawnFloatingHearts();
+            hugModal.classList.remove('opacity-0', 'pointer-events-none');
+            hugModal.classList.add('opacity-100', 'pointer-events-auto');
+            hugModalCard.classList.remove('scale-90');
+            hugModalCard.classList.add('scale-100');
+        }
+
+        /**
+         * Close the hugging modal
+         */
+        function closeHugModal() {
+            hugModal.classList.add('opacity-0', 'pointer-events-none');
+            hugModal.classList.remove('opacity-100', 'pointer-events-auto');
+            hugModalCard.classList.add('scale-90');
+            hugModalCard.classList.remove('scale-100');
+            heartsContainer.innerHTML = '';
+        }
+
+        /**
+         * Generate subtle floating heart particles inside the pop-up card
+         */
+        function spawnFloatingHearts() {
+            heartsContainer.innerHTML = '';
+            const positions = [12, 24, 38, 52, 68, 82, 90];
+            positions.forEach((leftPct, index) => {
+                const heart = document.createElement('div');
+                heart.className = 'floating-heart text-roseAccent/50';
+                heart.style.left = `${leftPct}%`;
+                heart.style.bottom = `${10 + (index % 3) * 12}%`;
+                heart.style.animationDelay = `${index * 0.35}s`;
+                heart.innerHTML = `
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                `;
+                heartsContainer.appendChild(heart);
+            });
+        }
+
+        /**
+         * Reset entire experience back to Slide 1
+         */
+        function resetApp() {
+            closeHugModal();
+            resetSliderState();
+            goToSlide(1);
+        }
+    </script>
+</body>
+</html>
