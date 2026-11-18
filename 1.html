@@ -1,0 +1,781 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Our Love Story</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
+                    },
+                    colors: {
+                        roseAccent: '#FF4D6D',
+                        roseSoft: '#FFF0F3',
+                        roseBorder: '#FFCCD5',
+                        slateClean: '#F8FAFC',
+                    },
+                    boxShadow: {
+                        'bubble': '0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 4px 10px -2px rgba(15, 23, 42, 0.04)',
+                        'card': '0 20px 40px -15px rgba(255, 77, 109, 0.12)',
+                        'btn': '0 10px 20px -5px rgba(255, 77, 109, 0.35)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Base Mobile-First Reset & Clean White Aesthetics */
+        html, body {
+            background-color: #F1F5F9;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* Centered Mobile App Container */
+        #app-shell {
+            max-width: 430px;
+            min-height: 100dvh;
+            background-color: #FFFFFF;
+            margin: 0 auto;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 50px rgba(15, 23, 42, 0.07);
+            overflow: hidden;
+        }
+
+        /* Speech Bubble Tails */
+        .bubble-left {
+            position: relative;
+            background: #FFFFFF;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 22px;
+            border-bottom-left-radius: 6px;
+        }
+        .bubble-left::after {
+            content: '';
+            position: absolute;
+            left: -8px;
+            bottom: 14px;
+            width: 14px;
+            height: 14px;
+            background: #FFFFFF;
+            border-left: 1.5px solid #E2E8F0;
+            border-bottom: 1.5px solid #E2E8F0;
+            transform: rotate(45deg);
+            border-bottom-left-radius: 3px;
+        }
+
+        .bubble-right {
+            position: relative;
+            background: #FFF0F3;
+            border: 1.5px solid #FFCCD5;
+            border-radius: 22px;
+            border-bottom-right-radius: 6px;
+        }
+        .bubble-right::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            bottom: 14px;
+            width: 14px;
+            height: 14px;
+            background: #FFF0F3;
+            border-right: 1.5px solid #FFCCD5;
+            border-bottom: 1.5px solid #FFCCD5;
+            transform: rotate(-45deg);
+            border-bottom-right-radius: 3px;
+        }
+
+        /* Slide Animations */
+        .slide-panel {
+            display: none;
+            opacity: 0;
+            transform: translateY(14px);
+            transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .slide-panel.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Pop-in Animation for Chat Bubbles */
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.88) translateY(12px);
+            }
+            70% {
+                opacity: 1;
+                transform: scale(1.02) translateY(-2px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .animate-pop-in {
+            animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Subtle Gentle Float for Characters */
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-4px); }
+        }
+        .animate-float {
+            animation: gentleFloat 3.5s ease-in-out infinite;
+        }
+
+        /* Custom Tactile Range Slider for Slide 3 */
+        input[type="range"].love-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 54px;
+            background: #FFF0F3;
+            border: 1.5px solid #FFCCD5;
+            border-radius: 9999px;
+            outline: none;
+            padding: 0 6px;
+            cursor: pointer;
+            box-shadow: inset 0 2px 6px rgba(255, 77, 109, 0.08);
+            transition: border-color 0.2s ease;
+        }
+
+        input[type="range"].love-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF4D6D 0%, #FF758F 100%);
+            cursor: grab;
+            box-shadow: 0 4px 14px rgba(255, 77, 109, 0.45);
+            border: 3px solid #FFFFFF;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
+            background-size: 20px 20px;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform 0.15s ease;
+        }
+
+        input[type="range"].love-slider::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+
+        input[type="range"].love-slider::-moz-range-thumb {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF4D6D 0%, #FF758F 100%);
+            cursor: grab;
+            box-shadow: 0 4px 14px rgba(255, 77, 109, 0.45);
+            border: 3px solid #FFFFFF;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
+            background-size: 20px 20px;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        /* Floating Hearts Confetti Animation */
+        @keyframes floatUpHeart {
+            0% {
+                transform: translateY(20px) scale(0.6) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.9;
+            }
+            100% {
+                transform: translateY(-280px) scale(1.15) rotate(25deg);
+                opacity: 0;
+            }
+        }
+        .floating-heart {
+            position: absolute;
+            pointer-events: none;
+            animation: floatUpHeart 2.8s ease-out forwards;
+        }
+
+        /* Typing indicator dots */
+        @keyframes pulseDot {
+            0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        .typing-dot {
+            animation: pulseDot 1.2s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+
+    <!-- Main Centered Mobile Container -->
+    <div id="app-shell">
+        
+        <!-- Top Navigation & Progress Bar -->
+        <header class="pt-5 pb-3 px-6 bg-white/95 backdrop-blur-sm sticky top-0 z-20 border-b border-slate-100">
+            <div class="flex items-center justify-between">
+                <!-- Back Button (Hidden on Slide 1) -->
+                <button id="prev-btn" onclick="goToSlide(currentSlide - 1)" aria-label="Previous slide"
+                    class="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all opacity-0 pointer-events-none">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+
+                <!-- Slide Progress Pills/Dots -->
+                <div class="flex items-center gap-2" role="tablist" aria-label="Story progress">
+                    <button onclick="goToSlide(1)" id="dot-1" class="h-2.5 w-8 rounded-full bg-roseAccent transition-all duration-300" aria-label="Slide 1"></button>
+                    <button onclick="goToSlide(2)" id="dot-2" class="h-2.5 w-2.5 rounded-full bg-slate-200 hover:bg-slate-300 transition-all duration-300" aria-label="Slide 2"></button>
+                    <button onclick="goToSlide(3)" id="dot-3" class="h-2.5 w-2.5 rounded-full bg-slate-200 hover:bg-slate-300 transition-all duration-300" aria-label="Slide 3"></button>
+                </div>
+
+                <!-- Step Counter -->
+                <span id="step-label" class="text-xs font-semibold text-slate-400 tracking-wider w-9 text-right">1/3</span>
+            </div>
+        </header>
+
+        <!-- Main Slide Viewport -->
+        <main class="flex-1 flex flex-col justify-between px-5 py-4 overflow-y-auto">
+
+            <!-- ==========================================
+                 SLIDE 1: CHARACTER INTRODUCTIONS
+            =========================================== -->
+            <section id="slide-1" class="slide-panel active flex-1 flex-col justify-between">
+                <div>
+                    <!-- Romantic Intro Header -->
+                    <div class="text-center mt-1 mb-6">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-roseSoft text-roseAccent text-xs font-bold tracking-wide uppercase mb-2">
+                            <span>♥</span> Our Story Begins
+                        </span>
+                        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Meet The Characters</h1>
+                        <p class="text-xs text-slate-500 mt-1">Two hearts, one unforgettable chapter</p>
+                    </div>
+
+                    <!-- Character Cards Stack -->
+                    <div class="space-y-6 my-auto">
+                        
+                        <!-- Character 1: Ahinsaka Dilaccana -->
+                        <div class="flex items-center gap-3.5 bg-slateClean/70 p-3.5 rounded-3xl border border-slate-100 shadow-sm">
+                            <div class="w-28 h-32 flex-shrink-0 rounded-2xl bg-white border border-slate-100 p-1.5 flex items-center justify-center shadow-sm overflow-hidden">
+                                <img src="https://i.postimg.cc/8z850QWC/AIRetouch-20261118-160545159.png" 
+                                     alt="Ahinsaka Dilaccana" 
+                                     onerror="this.src='https://placehold.co/200x240/FFF0F3/FF4D6D?text=Ahinsaka'"
+                                     class="w-full h-full object-contain animate-float">
+                            </div>
+                            <div class="flex-1">
+                                <div class="bubble-left p-4 shadow-bubble">
+                                    <span class="block text-[10px] font-bold uppercase tracking-wider text-roseAccent mb-1">Character 01</span>
+                                    <p class="text-[15px] font-bold text-slate-800 leading-snug">
+                                        This is Ahinsaka Dilaccana
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Character 2: Napuru Chamacca -->
+                        <div class="flex items-center gap-3.5 bg-roseSoft/40 p-3.5 rounded-3xl border border-roseBorder/50 shadow-sm">
+                            <div class="flex-1">
+                                <div class="bubble-right p-4 shadow-bubble">
+                                    <span class="block text-[10px] font-bold uppercase tracking-wider text-roseAccent mb-1">Character 02</span>
+                                    <p class="text-[15px] font-bold text-slate-800 leading-snug">
+                                        This is Napuru Chamacca
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="w-28 h-32 flex-shrink-0 rounded-2xl bg-white border border-roseBorder/60 p-1.5 flex items-center justify-center shadow-sm overflow-hidden">
+                                <img src="https://i.postimg.cc/gcDQ7vZ4/AIRetouch-20261118-160759573.png" 
+                                     alt="Napuru Chamacca" 
+                                     onerror="this.src='https://placehold.co/200x240/FFF0F3/FF4D6D?text=Napuru'"
+                                     class="w-full h-full object-contain animate-float" style="animation-delay: 0.7s;">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Slide 1 Next CTA -->
+                <div class="pt-6 pb-2">
+                    <button onclick="goToSlide(2)" 
+                        class="w-full py-4 px-6 rounded-2xl bg-roseAccent hover:bg-[#e63e5c] active:scale-[0.98] text-white font-bold text-base shadow-btn transition-all flex items-center justify-center gap-2">
+                        <span>Next</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+
+            <!-- ==========================================
+                 SLIDE 2: INTERACTIVE DIALOGUE
+            =========================================== -->
+            <section id="slide-2" class="slide-panel flex-1 flex-col justify-between">
+                <div class="flex flex-col flex-1">
+                    <!-- Top Date Pill Badge -->
+                    <div class="text-center mt-1 mb-5">
+                        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold tracking-wide shadow-sm">
+                            <svg class="w-3.5 h-3.5 text-roseAccent" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                            </svg>
+                            15th November 2025
+                        </span>
+                    </div>
+
+                    <!-- Dialogue Thread Container -->
+                    <div id="chat-thread" class="space-y-4 flex-1 flex flex-col justify-start">
+                        
+                        <!-- Message 1: Boy Initial Greeting -->
+                        <div class="flex items-end gap-3 animate-pop-in">
+                            <div class="w-20 h-24 flex-shrink-0 rounded-2xl bg-slateClean border border-slate-200/80 p-1 flex items-center justify-center shadow-sm">
+                                <img src="https://i.postimg.cc/RVLsCFLM/AIRetouch-20261119-005256129.png" 
+                                     alt="Boy" 
+                                     onerror="this.src='https://placehold.co/160x200/F8FAFC/334155?text=Boy'"
+                                     class="w-full h-full object-contain">
+                            </div>
+                            <div class="bubble-left px-4 py-3.5 shadow-bubble max-w-[72%]">
+                                <p class="text-[15px] font-bold text-slate-800">Hello Babe!</p>
+                            </div>
+                        </div>
+
+                        <!-- Message 2: Girl Reply (Initially Hidden) -->
+                        <div id="msg-girl-reply" class="hidden items-end justify-end gap-3">
+                            <div class="bubble-right px-4 py-3.5 shadow-bubble max-w-[72%]">
+                                <p class="text-[15px] font-bold text-slate-800">Hello Babe, I want a kitten...</p>
+                            </div>
+                            <div class="w-20 h-24 flex-shrink-0 rounded-2xl bg-roseSoft/60 border border-roseBorder p-1 flex items-center justify-center shadow-sm">
+                                <img src="https://i.postimg.cc/mZQVVDq8/AIRetouch-20261119-005245669.png" 
+                                     alt="Girl" 
+                                     onerror="this.src='https://placehold.co/160x200/FFF0F3/FF4D6D?text=Girl'"
+                                     class="w-full h-full object-contain">
+                            </div>
+                        </div>
+
+                        <!-- Typing Indicator (Shown briefly between Girl & Boy reply) -->
+                        <div id="boy-typing" class="hidden items-end gap-3">
+                            <div class="w-20 h-24 flex-shrink-0 rounded-2xl bg-slateClean border border-slate-200/80 p-1 flex items-center justify-center shadow-sm">
+                                <img src="https://i.postimg.cc/RVLsCFLM/AIRetouch-20261119-005256129.png" 
+                                     alt="Boy typing" 
+                                     class="w-full h-full object-contain opacity-80">
+                            </div>
+                            <div class="bubble-left px-4 py-3.5 shadow-bubble">
+                                <div class="flex items-center gap-1.5 h-5">
+                                    <span class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></span>
+                                    <span class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></span>
+                                    <span class="w-2 h-2 rounded-full bg-slate-400 typing-dot"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message 3: Boy Final Response (Initially Hidden) -->
+                        <div id="msg-boy-final" class="hidden items-end gap-3">
+                            <div class="w-20 h-24 flex-shrink-0 rounded-2xl bg-slateClean border border-slate-200/80 p-1 flex items-center justify-center shadow-sm">
+                                <img src="https://i.postimg.cc/RVLsCFLM/AIRetouch-20261119-005256129.png" 
+                                     alt="Boy" 
+                                     onerror="this.src='https://placehold.co/160x200/F8FAFC/334155?text=Boy'"
+                                     class="w-full h-full object-contain">
+                            </div>
+                            <div class="bubble-left px-4 py-3.5 shadow-bubble max-w-[74%]">
+                                <p class="text-[15px] font-bold text-slate-800 leading-snug">Okay Babe. I will bring it to you.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Interactive Action Footer for Slide 2 -->
+                <div class="pt-5 pb-2">
+                    <!-- Step 1: Select Reply Prompt -->
+                    <div id="reply-prompt-box" class="bg-slateClean border border-slate-200/90 rounded-2xl p-3.5 transition-all">
+                        <div class="flex items-center gap-1.5 mb-2.5 px-1">
+                            <span class="w-2 h-2 rounded-full bg-roseAccent animate-ping"></span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Select Reply</span>
+                        </div>
+                        <button onclick="triggerDialogueReply()" 
+                            class="w-full text-left px-4 py-3.5 rounded-xl bg-white hover:bg-roseSoft border-2 border-roseAccent/80 text-slate-900 font-bold text-sm shadow-sm active:scale-[0.98] transition-all flex items-center justify-between group">
+                            <span>"Hello Babe, I want a kitten..."</span>
+                            <span class="w-7 h-7 rounded-full bg-roseAccent text-white flex items-center justify-center flex-shrink-0 group-hover:translate-x-0.5 transition-transform">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Next Button (Appears after conversation completes) -->
+                    <button id="slide2-next-btn" onclick="goToSlide(3)" 
+                        class="hidden w-full py-4 px-6 rounded-2xl bg-roseAccent hover:bg-[#e63e5c] active:scale-[0.98] text-white font-bold text-base shadow-btn transition-all items-center justify-center gap-2">
+                        <span>Next</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+
+            <!-- ==========================================
+                 SLIDE 3: INTERACTIVE SLIDER & REVEAL
+            =========================================== -->
+            <section id="slide-3" class="slide-panel flex-1 flex-col justify-between">
+                <div class="flex flex-col flex-1">
+                    <!-- Top Date Pill Badge -->
+                    <div class="text-center mt-1 mb-3">
+                        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold tracking-wide shadow-sm">
+                            <svg class="w-3.5 h-3.5 text-roseAccent" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                            </svg>
+                            19th November 2025
+                        </span>
+                        <p class="text-xs text-slate-500 mt-2 font-medium">Bring them together to unlock our memory</p>
+                    </div>
+
+                    <!-- Interactive Character Stage -->
+                    <div id="stage-box" class="relative flex-1 min-h-[270px] my-2 rounded-3xl bg-gradient-to-b from-slateClean to-roseSoft/40 border border-slate-200/80 overflow-hidden flex items-end justify-between px-3 pb-4 shadow-inner">
+                        
+                        <!-- Subtle Decorative Distance Indicator -->
+                        <div class="absolute top-4 inset-x-0 flex justify-center pointer-events-none">
+                            <div id="distance-badge" class="px-3 py-1 rounded-full bg-white/90 border border-slate-200/80 text-[11px] font-bold text-slate-600 shadow-sm transition-all">
+                                Waiting for her... ♥
+                            </div>
+                        </div>
+
+                        <!-- Center Heart Spark (Grows as she gets closer) -->
+                        <div id="stage-heart" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all duration-200 opacity-15 scale-75">
+                            <svg class="w-16 h-16 text-roseAccent" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </div>
+
+                        <!-- Boy Character (Fixed on Left) -->
+                        <div id="boy-stage-char" class="relative z-10 w-[42%] h-52 flex items-end justify-center pointer-events-none">
+                            <img src="https://i.postimg.cc/W3tLgZXR/AIRetouch-20261119-005042383.png" 
+                                 alt="Boy standing" 
+                                 onerror="this.src='https://placehold.co/220x300/F8FAFC/334155?text=Boy'"
+                                 class="w-full h-full object-contain object-bottom drop-shadow-sm">
+                        </div>
+
+                        <!-- Girl Character (Movable Horizontally from Right toward Boy on Left) -->
+                        <div id="girl-stage-char" class="relative z-20 w-[42%] h-52 flex items-end justify-center pointer-events-none transition-transform duration-75 ease-out" style="transform: translateX(0px);">
+                            <img src="https://i.postimg.cc/bJZht5R3/AIRetouch-20261119-012453618.png" 
+                                 alt="Girl sliding" 
+                                 onerror="this.src='https://placehold.co/220x300/FFF0F3/FF4D6D?text=Girl'"
+                                 class="w-full h-full object-contain object-bottom drop-shadow-md">
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Below Stage: Tactile Slider Control -->
+                <div class="pt-3 pb-2">
+                    <div class="relative flex items-center">
+                        <input id="love-range-slider" type="range" min="0" max="100" value="0" aria-label="Slide her closer to him"
+                            class="love-slider z-10 relative bg-transparent">
+                        <!-- Helper Label inside track -->
+                        <div id="slider-hint-text" class="absolute inset-0 flex items-center justify-center pl-8 pointer-events-none text-xs font-bold text-roseAccent/80 tracking-wide">
+                            Slide her closer to him →
+                        </div>
+                    </div>
+
+                    <!-- Re-open Memory Button (Visible once unlocked) -->
+                    <button id="reopen-modal-btn" onclick="openAnniversaryModal()" 
+                        class="hidden mt-3 w-full py-3 px-4 rounded-2xl bg-roseSoft hover:bg-roseBorder/40 text-roseAccent font-bold text-xs border border-roseBorder transition-all items-center justify-center gap-1.5">
+                        <span>♥ View Anniversary Memory Again</span>
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Fixed Minimal Footer -->
+        <footer class="py-3.5 px-6 text-center bg-white border-t border-slate-100/80 z-20">
+            <p class="text-xs font-semibold text-slate-400 tracking-wide">your pissu kollah</p>
+        </footer>
+
+
+        <!-- ==========================================
+             ANNIVERSARY POPUP MODAL (SLIDE 3 REVEAL)
+        =========================================== -->
+        <div id="anniversary-modal" class="hidden fixed inset-0 z-50 items-center justify-center p-5 bg-slate-900/50 backdrop-blur-xs transition-opacity duration-300">
+            
+            <!-- Floating Hearts Container -->
+            <div id="hearts-container" class="fixed inset-0 pointer-events-none overflow-hidden z-50"></div>
+
+            <!-- Modal Card (Constrained to Mobile Width) -->
+            <div class="relative w-full max-w-[385px] bg-white rounded-[32px] p-5 shadow-card border border-roseBorder/60 animate-pop-in z-50 text-center">
+                
+                <!-- Top Celebratory Pill -->
+                <div class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-roseSoft text-roseAccent text-[11px] font-extrabold uppercase tracking-wider mb-3">
+                    <span>✨</span> Special Milestone <span>✨</span>
+                </div>
+
+                <!-- Special Anniversary Photo Frame -->
+                <div class="w-full h-64 rounded-2xl bg-slateClean border border-slate-100 p-2 mb-4 flex items-center justify-center overflow-hidden shadow-inner">
+                    <img src="https://i.postimg.cc/QNy5QrNS/AIRetouch-20261119-010250415.png" 
+                         alt="Anniversary Celebration" 
+                         onerror="this.src='https://placehold.co/320x320/FFF0F3/FF4D6D?text=1+Year+Together'"
+                         class="w-full h-full object-contain rounded-xl">
+                </div>
+
+                <!-- Highlighted Romantic Text -->
+                <div class="bg-gradient-to-r from-roseSoft via-[#FFE5EC] to-roseSoft border border-roseBorder rounded-2xl px-4 py-3.5 mb-5">
+                    <p class="text-[17px] font-extrabold text-slate-900 leading-snug">
+                        <span class="text-roseAccent">“</span>It has been exactly one year as of today.<span class="text-roseAccent">”</span>
+                    </p>
+                </div>
+
+                <!-- Modal Action Buttons -->
+                <div class="flex items-center gap-2.5">
+                    <button onclick="replaySlider()" 
+                        class="flex-1 py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all">
+                        Replay Slide
+                    </button>
+                    <button onclick="closeAnniversaryModal()" 
+                        class="flex-1 py-3 px-4 rounded-xl bg-roseAccent hover:bg-[#e63e5c] text-white font-bold text-xs shadow-btn transition-all">
+                        Keep Together ♥
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Application State
+        let currentSlide = 1;
+        let dialogueCompleted = false;
+        let modalTriggered = false;
+
+        // DOM References
+        const slides = {
+            1: document.getElementById('slide-1'),
+            2: document.getElementById('slide-2'),
+            3: document.getElementById('slide-3')
+        };
+        const dots = {
+            1: document.getElementById('dot-1'),
+            2: document.getElementById('dot-2'),
+            3: document.getElementById('dot-3')
+        };
+        const prevBtn = document.getElementById('prev-btn');
+        const stepLabel = document.getElementById('step-label');
+
+        // Navigation Controller
+        function goToSlide(targetSlide) {
+            if (targetSlide < 1 || targetSlide > 3) return;
+            currentSlide = targetSlide;
+
+            // Update Slides Visibility
+            Object.keys(slides).forEach(key => {
+                const num = parseInt(key, 10);
+                if (num === currentSlide) {
+                    slides[num].classList.add('active');
+                } else {
+                    slides[num].classList.remove('active');
+                }
+            });
+
+            // Update Progress Dots
+            Object.keys(dots).forEach(key => {
+                const num = parseInt(key, 10);
+                if (num === currentSlide) {
+                    dots[num].className = 'h-2.5 w-8 rounded-full bg-roseAccent transition-all duration-300';
+                } else if (num < currentSlide) {
+                    dots[num].className = 'h-2.5 w-2.5 rounded-full bg-roseAccent/50 transition-all duration-300';
+                } else {
+                    dots[num].className = 'h-2.5 w-2.5 rounded-full bg-slate-200 hover:bg-slate-300 transition-all duration-300';
+                }
+            });
+
+            // Update Header Back Button & Counter
+            stepLabel.textContent = `${currentSlide}/3`;
+            if (currentSlide > 1) {
+                prevBtn.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                prevBtn.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        // Slide 2: Interactive Dialogue Flow
+        function triggerDialogueReply() {
+            if (dialogueCompleted) return;
+            dialogueCompleted = true;
+
+            const promptBox = document.getElementById('reply-prompt-box');
+            const girlMsg = document.getElementById('msg-girl-reply');
+            const boyTyping = document.getElementById('boy-typing');
+            const boyFinalMsg = document.getElementById('msg-boy-final');
+            const nextBtn = document.getElementById('slide2-next-btn');
+
+            // Hide prompt box smoothly
+            promptBox.classList.add('hidden');
+
+            // Show Girl's speech bubble
+            girlMsg.classList.remove('hidden');
+            girlMsg.classList.add('flex', 'animate-pop-in');
+
+            // Show Boy's typing indicator briefly
+            setTimeout(() => {
+                boyTyping.classList.remove('hidden');
+                boyTyping.classList.add('flex', 'animate-pop-in');
+            }, 300);
+
+            // Replace typing indicator with Boy's final reply after 950ms
+            setTimeout(() => {
+                boyTyping.classList.add('hidden');
+                boyTyping.classList.remove('flex');
+
+                boyFinalMsg.classList.remove('hidden');
+                boyFinalMsg.classList.add('flex', 'animate-pop-in');
+
+                // Reveal Next button to proceed to Slide 3
+                setTimeout(() => {
+                    nextBtn.classList.remove('hidden');
+                    nextBtn.classList.add('flex', 'animate-pop-in');
+                }, 400);
+            }, 1050);
+        }
+
+        // Slide 3: Interactive Slider Logic
+        const rangeSlider = document.getElementById('love-range-slider');
+        const girlChar = document.getElementById('girl-stage-char');
+        const boyChar = document.getElementById('boy-stage-char');
+        const stageBox = document.getElementById('stage-box');
+        const sliderHintText = document.getElementById('slider-hint-text');
+        const distanceBadge = document.getElementById('distance-badge');
+        const stageHeart = document.getElementById('stage-heart');
+        const reopenModalBtn = document.getElementById('reopen-modal-btn');
+
+        function updateCharacterPosition(val) {
+            const percentage = parseInt(val, 10);
+
+            // Fade out slider helper text as user drags
+            sliderHintText.style.opacity = Math.max(0, 1 - (percentage / 35));
+
+            // Calculate horizontal distance between girl (right) and boy (left)
+            const stageWidth = stageBox.clientWidth || 350;
+            const charWidth = girlChar.clientWidth || 130;
+            // Maximum travel distance brings her right beside him with gentle overlap
+            const maxTravel = Math.max(0, stageWidth - (charWidth * 1.72));
+            const moveX = -(maxTravel * (percentage / 100));
+
+            girlChar.style.transform = `translateX(${moveX}px)`;
+
+            // Update central heart & status badge dynamically
+            const heartScale = 0.75 + (percentage / 100) * 0.65;
+            const heartOpacity = 0.15 + (percentage / 100) * 0.75;
+            stageHeart.style.transform = `translate(-50%, -50%) scale(${heartScale})`;
+            stageHeart.style.opacity = heartOpacity;
+
+            if (percentage < 30) {
+                distanceBadge.textContent = "Waiting for her... ♥";
+            } else if (percentage < 85) {
+                distanceBadge.textContent = "Almost there... ♥♥";
+            } else {
+                distanceBadge.textContent = "Together Forever ♥♥♥";
+            }
+
+            // Trigger Anniversary Popup at >= 88%
+            if (percentage >= 88 && !modalTriggered) {
+                modalTriggered = true;
+                rangeSlider.value = 100;
+                girlChar.style.transform = `translateX(${-maxTravel}px)`;
+                distanceBadge.textContent = "Together Forever ♥♥♥";
+                reopenModalBtn.classList.remove('hidden');
+                reopenModalBtn.classList.add('flex');
+                
+                setTimeout(() => {
+                    openAnniversaryModal();
+                }, 260);
+            }
+        }
+
+        rangeSlider.addEventListener('input', (e) => {
+            updateCharacterPosition(e.target.value);
+        });
+
+        // Recalculate position cleanly on window resize
+        window.addEventListener('resize', () => {
+            if (currentSlide === 3) {
+                updateCharacterPosition(rangeSlider.value);
+            }
+        });
+
+        // Anniversary Modal & Floating Hearts Celebration
+        const modal = document.getElementById('anniversary-modal');
+        const heartsContainer = document.getElementById('hearts-container');
+        let heartInterval = null;
+
+        function spawnFloatingHeart() {
+            const heart = document.createElement('div');
+            heart.className = 'floating-heart text-roseAccent select-none';
+            const symbols = ['♥', '💖', '💕', '✨'];
+            heart.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+            
+            const leftPos = 15 + Math.random() * 70; // keep centered over mobile view
+            const size = 16 + Math.random() * 16;
+            heart.style.left = `${leftPos}%`;
+            heart.style.bottom = '18%';
+            heart.style.fontSize = `${size}px`;
+            
+            heartsContainer.appendChild(heart);
+            setTimeout(() => {
+                heart.remove();
+            }, 2800);
+        }
+
+        function openAnniversaryModal() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // Burst of initial hearts
+            for (let i = 0; i < 8; i++) {
+                setTimeout(spawnFloatingHeart, i * 140);
+            }
+            // Gentle ongoing hearts while modal is open
+            if (!heartInterval) {
+                heartInterval = setInterval(spawnFloatingHeart, 550);
+            }
+        }
+
+        function closeAnniversaryModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            if (heartInterval) {
+                clearInterval(heartInterval);
+                heartInterval = null;
+            }
+        }
+
+        function replaySlider() {
+            closeAnniversaryModal();
+            modalTriggered = false;
+            rangeSlider.value = 0;
+            updateCharacterPosition(0);
+        }
+    </script>
+</body>
+</html>
+```
